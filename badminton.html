@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton Score Counter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-bottom: 40px;
+        }
+        .main-scoreboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            font-size: 72px;
+            font-weight: bold;
+        }
+        .score-number {
+            min-width: 120px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+        }
+        .games-won {
+            font-size: 24px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .score-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 20px;
+        }
+        .player {
+            border: 2px solid black;
+            padding: 20px;
+            border-radius: 10px;
+            width: 150px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .reset-button {
+            margin: 20px 0;
+        }
+        .match-history {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+        }
+        .match-card {
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .match-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .clear-history {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Badminton Score Counter</h1>
+    
+    <div class="main-scoreboard">
+        <div>
+            <div class="score-number" id="score1">0</div>
+            <div class="games-won" id="games1">Games: 0</div>
+        </div>
+        <div style="font-size: 48px;">-</div>
+        <div>
+            <div class="score-number" id="score2">0</div>
+            <div class="games-won" id="games2">Games: 0</div>
+        </div>
+    </div>
+
+    <button onclick="coinToss()">Toss Coin for First Serve</button>
+    <h2 id="tossResult"></h2>
+    
+    <div class="score-container">
+        <div class="player">
+            <h2>Player 1</h2>
+            <h4 id="serve1">Waiting for Toss</h4>
+            <button onclick="increaseScore(1)">+1</button>
+            <button onclick="decreaseScore(1)">-1</button>
+        </div>
+        <div class="player">
+            <h2>Player 2</h2>
+            <h4 id="serve2">Waiting for Toss</h4>
+            <button onclick="increaseScore(2)">+1</button>
+            <button onclick="decreaseScore(2)">-1</button>
+        </div>
+    </div>
+
+    <div class="reset-button">
+        <button onclick="resetScores()">Reset</button>
+    </div>
+
+    <div class="match-history">
+        <h2>Match History</h2>
+        <div id="matchHistory"></div>
+        <div class="clear-history">
+            <button onclick="clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize all variables at the start
+        let score1 = 0;
+        let score2 = 0;
+        let games1 = 0;
+        let games2 = 0;
+        let server = 1;
+        let gameScores = [];
+        let matchHistory = [];
+
+        function coinToss() {
+            if (Math.random() < 0.5) {
+                document.getElementById("tossResult").innerText = "Player 1 serves first";
+                server = 1;
+            } else {
+                document.getElementById("tossResult").innerText = "Player 2 serves first";
+                server = 2;
+            }
+            updateServe();
+        }
+
+        function increaseScore(player) {
+            if (player === 1) {
+                score1++;
+                if (player !== server) {
+                    server = 1; // Only change server if receiving player scores
+                }
+            } else {
+                score2++;
+                if (player !== server) {
+                    server = 2; // Only change server if receiving player scores
+                }
+            }
+            checkWinner();
+            updateScores();
+        }
+
+        function decreaseScore(player) {
+            if (player === 1 && score1 > 0) {
+                score1--;
+            } else if (player === 2 && score2 > 0) {
+                score2--;
+            }
+            updateScores();
+        }
+
+        function checkWinner() {
+            if (score1 === 30) {
+                games1++;
+                gameScores.push(`${score1}-${score2}`);
+                alert("Player 1 wins the game with 30 points!");
+                resetGame();
+                checkMatchWinner();
+            } else if (score2 === 30) {
+                games2++;
+                gameScores.push(`${score1}-${score2}`);
+                alert("Player 2 wins the game with 30 points!");
+                resetGame();
+                checkMatchWinner();
+            } else if ((score1 >= 21 || score2 >= 21) && Math.abs(score1 - score2) >= 2) {
+                if (score1 > score2) {
+                    games1++;
+                    gameScores.push(`${score1}-${score2}`);
+                    alert("Player 1 wins the game!");
+                } else {
+                    games2++;
+                    gameScores.push(`${score1}-${score2}`);
+                    alert("Player 2 wins the game!");
+                }
+                resetGame();
+                checkMatchWinner();
+            }
+        }
+
+        function checkMatchWinner() {
+            if (games1 === 2 || games2 === 2) {
+                const winner = games1 > games2 ? "Player 1" : "Player 2";
+                const matchData = {
+                    date: new Date().toLocaleString(),
+                    winner: winner,
+                    gameScores: [...gameScores],
+                    finalScore: `${games1}-${games2}`
+                };
+                
+                // Add to history
+                matchHistory.unshift(matchData);
+                displayMatchHistory();
+                
+                resetMatch();
+            }
+        }
+
+        function displayMatchHistory() {
+            const historyDiv = document.getElementById('matchHistory');
+            if (matchHistory.length === 0) {
+                historyDiv.innerHTML = '<p>No matches played yet</p>';
+                return;
+            }
+
+            historyDiv.innerHTML = matchHistory.map((match, index) => `
+                <div class="match-card">
+                    <div class="match-date">${match.date}</div>
+                    <strong>${match.winner} won the match</strong>
+                    <p>Final Score: ${match.finalScore}</p>
+                    <p>Game Scores:</p>
+                    ${match.gameScores.map((score, gameIndex) => `
+                        <p>Game ${gameIndex + 1}: ${score}</p>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all match history?')) {
+                matchHistory = [];
+                displayMatchHistory();
+            }
+        }
+
+        function resetGame() {
+            score1 = 0;
+            score2 = 0;
+            updateScores();
+        }
+
+        function resetScores() {
+            score1 = 0;
+            score2 = 0;
+            games1 = 0;
+            games2 = 0;
+            gameScores = [];
+            document.getElementById("tossResult").innerText = "";
+            server = 1;
+            updateScores();
+        }
+
+        function resetMatch() {
+            resetScores();
+            alert("Starting a new match!");
+        }
+
+        function updateScores() {
+            document.getElementById("score1").innerText = score1;
+            document.getElementById("games1").innerText = `Games: ${games1}`;
+            document.getElementById("score2").innerText = score2;
+            document.getElementById("games2").innerText = `Games: ${games2}`;
+            updateServe();
+        }
+
+        function updateServe() {
+            if (server === 1) {
+                document.getElementById("serve1").innerText = "Serving from " + (score1 % 2 === 0 ? "Right" : "Left");
+                document.getElementById("serve2").innerText = "Receiving";
+            } else {
+                document.getElementById("serve2").innerText = "Serving from " + (score2 % 2 === 0 ? "Right" : "Left");
+                document.getElementById("serve1").innerText = "Receiving";
+            }
+        }
+
+        // Initialize the match history display
+        displayMatchHistory();
+    </script>
+</body>
+</html>
